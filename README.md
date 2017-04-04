@@ -81,8 +81,22 @@
     * cv2
     * numpy
 
-* 画像のcrop, resize
-    * prepare.pyを実行する
+### 画像のmove, rename, crop, resize
+
+```
+提供されているzipを展開し、ラベルと一緒に置く。例えば
+
+C:\Users\kt\Documents\DataSet\cookpad>ls -l
+total 8376
+drwxr-xr-x 1 kt 197614      0 Apr  4 20:53 clf_test_images_1
+drwxr-xr-x 1 kt 197614      0 Apr  4 20:54 clf_test_images_2
+drwxr-xr-x 1 kt 197614      0 Apr  4 20:50 clf_train_images_labeled_1
+drwxr-xr-x 1 kt 197614      0 Apr  4 20:50 clf_train_images_labeled_2
+-rw-r--r-- 1 kt 197614 184920 Apr  4 15:04 clf_train_master.tsv
+```
+    
+* prepare.pyを実行する
+    * crop, resize, rename, moveする
     
 * 学習
 
