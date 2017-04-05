@@ -5,8 +5,11 @@ import cv2
 import os
 import shutil
 
-from constant import IMAGES_ROOT
+from tqdm import tqdm
 
+from constant import IMAGES_ROOT
+from constant import IMAGE_SIZE
+from square_cropper import SquareCropper
 
 def make_directory():
     os.mkdir(IMAGES_ROOT + 'clf_train_all')
@@ -41,7 +44,17 @@ def copy_and_rename():
 
 
 def crop():
-    pass
+    cropper = SquareCropper()
+
+    for name in ['train', 'test']:
+        image_path_list = glob.glob(IMAGES_ROOT + 'clf_{}_all/*.jpg'.format(name))
+        for image_path in tqdm(image_path_list):
+            image = cv2.imread(image_path)
+            cropped_image_list = cropper.crop_all(image, IMAGE_SIZE)
+            for crop_index, cropped_image in enumerate(cropped_image_list):
+                save_dir = IMAGES_ROOT + 'clf_{}_224x224_{}/'.format(name, crop_index)
+                filename = os.path.basename(image_path).replace('.jpg', '.png')
+                cv2.imwrite(save_dir + filename, cropped_image)
 
 
 def resize():
@@ -59,7 +72,7 @@ def make_rec():
 if __name__ == '__main__':
     #make_directory()
     #copy_and_rename()
-    #crop()
+    crop()
     #resize()
     #make_lst()
     #make_rec()

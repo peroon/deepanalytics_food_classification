@@ -74,12 +74,13 @@
 ## モデル再現のための手順
 
 * 必要なPythonパッケージのインストール
-    * mxnet
+    * mxnet (機械学習)
         * http://mxnet.io/get_started/windows_setup.html を参考にimport mxnetできるように設定します
         * ビルド済みのものが提供されています https://github.com/dmlc/mxnet/releases
         * 1つ注意すべきなのは、setupenv.cmdでの環境変数設定は、1024文字の長さ制限により、環境変数を破壊しうるということ
-    * cv2
-    * numpy
+    * cv2 (画像処理)
+    * numpy (行列計算)
+    * tqdm (進捗表示)
 
 ### 画像のmove, rename, crop, resize
 
