@@ -12,6 +12,8 @@ from constant import IMAGES_ROOT
 from constant import IMAGE_SIZE
 from square_cropper import SquareCropper
 
+DEBUG = True
+
 
 def make_directory():
     os.mkdir(IMAGES_ROOT + 'clf_train_all')
@@ -96,8 +98,8 @@ def write_lst(save_path, image_path_list, labels):
 
 
 def make_train_lst():
-    labels = get_labels()
-    os.mkdir(IMAGES_ROOT + 'mxnet')
+    if not os.path.exists(IMAGES_ROOT + 'mxnet'):
+        os.mkdir(IMAGES_ROOT + 'mxnet')
     mxnet_dir = IMAGES_ROOT + 'mxnet/'
 
     for fold_i in range(5):
@@ -111,7 +113,11 @@ def make_train_lst():
             glob_path = IMAGES_ROOT + 'clf_train_224x224_{}/*'.format(crop_i)
             image_path_list = glob.glob(glob_path)
 
+            if DEBUG:
+                image_path_list = image_path_list[:100]
+
             # train/valにsplitする
+            labels = get_labels()
             image_path_list_train, image_path_list_validation = split_list(image_path_list, fold_index=fold_i)
             labels_train, labels_validation = split_list(labels, fold_index=fold_i)
 
@@ -136,6 +142,10 @@ def make_test_lst():
     for crop_i in range(0, 4):
         glob_path = IMAGES_ROOT + 'clf_test_224x224_{}/*'.format(crop_i)
         image_path_list = glob.glob(glob_path)
+
+        if DEBUG:
+            image_path_list = image_path_list[:100]
+
         labels = [0] * len(image_path_list)
 
         # ファイルに書き込む
@@ -144,6 +154,8 @@ def make_test_lst():
 
 
 def make_rec():
+    command = ''
+
     pass
 
 
@@ -151,6 +163,6 @@ if __name__ == '__main__':
     #make_directory()
     #copy_and_rename()
     #crop()
-    make_train_lst()
-    make_test_lst()
-    #make_rec()
+    #make_train_lst()
+    #make_test_lst()
+    make_rec()
