@@ -13,6 +13,7 @@ from constant import IMAGE_SIZE
 from square_cropper import SquareCropper
 
 DEBUG = True
+mxnet_dir = IMAGES_ROOT + 'mxnet/'
 
 
 def make_directory():
@@ -100,7 +101,6 @@ def write_lst(save_path, image_path_list, labels):
 def make_train_lst():
     if not os.path.exists(IMAGES_ROOT + 'mxnet'):
         os.mkdir(IMAGES_ROOT + 'mxnet')
-    mxnet_dir = IMAGES_ROOT + 'mxnet/'
 
     for fold_i in range(5):
         # foldごとにデータリストを作る
@@ -136,7 +136,6 @@ def make_train_lst():
 
 
 def make_test_lst():
-    mxnet_dir = IMAGES_ROOT + 'mxnet/'
 
     # 各cropごとに1ファイルにする
     for crop_i in range(0, 4):
@@ -154,15 +153,28 @@ def make_test_lst():
 
 
 def make_rec():
-    command = ''
+    im2rec_fullpath = os.path.abspath('./dmlc_mxnet/tools/im2rec.py')
+    lst_path_list = glob.glob(mxnet_dir + '*.lst')
 
-    pass
+    # make bat
+    with open(mxnet_dir + 'make_rec.bat', 'w') as f:
+        for lst_path in lst_path_list:
+            filename_without_ext = os.path.basename(lst_path).split('.')[0]
+            print(filename_without_ext)
+            s = 'python {} --encoding .png {} .'.format(im2rec_fullpath, filename_without_ext)
+            f.write(s + '\n')
+
+    print('Execute .bat to make rec file.')
+    print(mxnet_dir)
+
+
 
 
 if __name__ == '__main__':
-    #make_directory()
-    #copy_and_rename()
-    #crop()
-    #make_train_lst()
-    #make_test_lst()
-    make_rec()
+    # make_directory()
+    # copy_and_rename()
+    # crop()
+    # make_train_lst()
+    # make_test_lst()
+    # make_rec()
+    pass
