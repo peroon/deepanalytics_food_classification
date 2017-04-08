@@ -51,19 +51,19 @@ def get_iterators(batch_size, data_shape=(3, 224, 224), fold_index=0):
     return (train, val)
 
 
-def fine_tune():
-    BATCH_SIZE = 20
+def fine_tune(mode):
+    BATCH_PER_GPU = 20
     CLASS_NUM = 25
-    EPOCH_NUM = 20
+    #EPOCH_NUM = 20
+    EPOCH_NUM = 2
     MODEL_NAME = 'resnext-101'
-    ENABLE_VALIDATION = False
+    ENABLE_VALIDATION = True
+    GPU_NUM = 1
 
-    print('学習済みモデルをDL')
-    print('model DL...', MODEL_NAME)
+    print('学習済みモデルをDL', MODEL_NAME)
     if MODEL_NAME is 'resnext-101':
         get_model('http://data.mxnet.io/models/imagenet/resnext/101-layers/resnext-101', 0)
         sym, arg_params, aux_params = mx.model.load_checkpoint('resnext-101', 0)
-    print('model DL Done')
 
     def get_fine_tune_model(symbol, arg_params, num_classes, layer_name='flatten0'):
         """
@@ -80,22 +80,17 @@ def fine_tune():
         new_args = dict({k: arg_params[k] for k in arg_params if 'fc1' not in k})
         return (net, new_args)
 
+    # 学習中のログ
     import logging
     head = '%(asctime)-15s %(message)s'
     logging.basicConfig(level=logging.DEBUG, format=head)
 
-    num_classes = CLASS_NUM
-    batch_per_gpu = BATCH_SIZE
-    num_gpus = 1
+    (new_sym, new_args) = get_fine_tune_model(sym, arg_params, CLASS_NUM)
 
-    (new_sym, new_args) = get_fine_tune_model(sym, arg_params, num_classes)
-
-    def fit(symbol, arg_params, aux_params, train, val, batch_size, num_gpus, fold_index):
-        devs = [mx.gpu(i) for i in range(num_gpus)]
-        mod = mx.mod.Module(symbol=new_sym,
-                            context=devs,
-                            )
-        mod.bind(data_shapes=train.provide_data, label_shapes=train.provide_label, force_rebind=True)
+    def fit(symbol, arg_params, aux_params, train, val, batch_size, GPU_NUM, fold_index):
+        devs = [mx.gpu(i) for i in range(GPU_NUM)]
+        mod = mx.mod.Module(symbol=new_sym, context=devs)
+        mod.bind(data_shapes=train.provide_data, label_shapes=train.provide_label)
         mod.init_params(initializer=mx.init.Xavier(rnd_type='gaussian', factor_type="in", magnitude=2))
         mod.set_params(new_args, aux_params, allow_missing=True)
 
@@ -114,45 +109,34 @@ def fine_tune():
                 eval_metric='acc')
         end_time = time.time()
         passed_minutes = int((end_time - start_time) / 60)
-
         print('学習完了', 'min', passed_minutes)
         mod.save_params('temp/model_weight/{}/model_params_fold_i_{}'.format(MODEL_NAME, fold_index))
 
         if ENABLE_VALIDATION:
             metric = mx.metric.Accuracy()
             return mod.score(val, metric)
+        else:
+            return None
 
-    # 学習か予測か選ぶ
-    enable_learning = True
-    if enable_learning:
+    if mode == 'train':
         for fold_i in range(0, 5):
             print('学習します', 'fold i', fold_i)
-            batch_size = batch_per_gpu * num_gpus
-
-            # データ
+            batch_size = BATCH_PER_GPU * GPU_NUM
             (train, val) = get_iterators(batch_size, fold_index=fold_i)
-
-            if ENABLE_VALIDATION:
-                print('Validation 有効')
-                print('fit start')
-                mod_score = fit(new_sym, new_args, aux_params, train, val, batch_size, num_gpus, fold_index=fold_i)
+            mod_score = fit(new_sym, new_args, aux_params, train, val, batch_size, GPU_NUM, fold_index=fold_i)
+            if mod_score:
                 result = list(mod_score)
                 print('result', result)
                 acc = result[0][1]
                 print('学習モデルの評価結果', acc)
-            else:
-                print('Validation 無効')
-                val = None
-                fit(new_sym, new_args, aux_params, train, val, batch_size, num_gpus, fold_index=fold_i)
 
-    enable_predict = False
-    if enable_predict:
+    if mode == 'predict':
         for fold_i in range(5):
             for crop_i in range(4):
                 print('予測します', 'fold i', fold_i, 'crop i', crop_i)
 
-                batch_size = batch_per_gpu * num_gpus
-                test_rec_path = "C:/Users/kt/Documents/DataSet/mxnet/test_224x224_crop_{}.rec".format(crop_i)
+                batch_size = BATCH_PER_GPU * GPU_NUM
+                test_rec_path = IMAGES_ROOT + "mxnet/test_224x224_crop_{}.rec".format(crop_i)
                 test = mx.io.ImageRecordIter(
                     path_imgrec=test_rec_path,
                     data_name='data',
@@ -162,21 +146,23 @@ def fine_tune():
                     rand_crop=False,
                     rand_mirror=False)
 
-                devs = [mx.gpu(i) for i in range(num_gpus)]
+                devs = [mx.gpu(i) for i in range(GPU_NUM)]
                 mod = mx.mod.Module(symbol=new_sym, context=devs)
                 mod.bind(data_shapes=test.provide_data, label_shapes=test.provide_label)
                 mod.init_params(initializer=mx.init.Xavier(rnd_type='gaussian', factor_type="in", magnitude=2))
                 mod.set_params(new_args, aux_params, allow_missing=True)
-                # 学習済みパラメタ
-                mod.load_params('temp/model_weight/{}/model_params_fold_i_{}'.format(MODEL_NAME, fold_i))
-                output_list = mod.predict(eval_data=test, num_batch=None) # 何セット予測するか rtype: mxnet.ndarray.NDArray
 
-                # 予測確率
+                # 学習済みパラメータをロード
+                mod.load_params('temp/model_weight/{}/model_params_fold_i_{}'.format(MODEL_NAME, fold_i))
+                output_list = mod.predict(eval_data=test, num_batch=None)
+
+                # 予測して確率を保存
                 probabilities = output_list.asnumpy()
                 save_path = 'temp/predict/{}/fold_{}_crop_{}_predict.npy'.format(MODEL_NAME, fold_i, crop_i)
                 np.save(save_path, probabilities)
 
-
 if __name__ == '__main__':
     #make_directory()
-    fine_tune()
+    fine_tune(mode='train')
+    #fine_tune(mode='predict')
+
