@@ -3,6 +3,7 @@
 import os
 import urllib.request
 import time
+import glob
 
 import mxnet as mx
 import numpy as np
@@ -13,6 +14,7 @@ from constant import IMAGES_ROOT
 def make_directory():
     os.makedirs('./temp/model_weight/resnext-101', exist_ok=True)
     os.makedirs('./temp/predict/resnext-101', exist_ok=True)
+    os.makedirs('./temp/submit', exist_ok=True)
 
 
 def download(url):
@@ -50,6 +52,7 @@ def get_iterators(batch_size, data_shape=(3, 224, 224), fold_index=0):
         rand_mirror=False)
     return (train, val)
 
+shared_module = None
 
 def fine_tune(mode):
     BATCH_PER_GPU = 20
@@ -88,11 +91,16 @@ def fine_tune(mode):
     (new_sym, new_args) = get_fine_tune_model(sym, arg_params, CLASS_NUM)
 
     def fit(symbol, arg_params, aux_params, train, val, batch_size, GPU_NUM, fold_index):
+        global shared_module
         devs = [mx.gpu(i) for i in range(GPU_NUM)]
         mod = mx.mod.Module(symbol=new_sym, context=devs)
-        mod.bind(data_shapes=train.provide_data, label_shapes=train.provide_label)
-        mod.init_params(initializer=mx.init.Xavier(rnd_type='gaussian', factor_type="in", magnitude=2))
-        mod.set_params(new_args, aux_params, allow_missing=True)
+        if shared_module:
+            mod.bind(data_shapes=train.provide_data, label_shapes=train.provide_label, shared_module=shared_module)
+        else:
+            mod.bind(data_shapes=train.provide_data, label_shapes=train.provide_label)
+            mod.init_params(initializer=mx.init.Xavier(rnd_type='gaussian', factor_type="in", magnitude=2))
+            mod.set_params(new_args, aux_params, allow_missing=True)
+            shared_module = mod
 
         start_time = time.time()
         mod.fit(train,
@@ -161,8 +169,29 @@ def fine_tune(mode):
                 save_path = 'temp/predict/{}/fold_{}_crop_{}_predict.npy'.format(MODEL_NAME, fold_i, crop_i)
                 np.save(save_path, probabilities)
 
+
+def average_predict():
+    """average predicts and make final predict"""
+
+    # 強識別器
+    predict_path_list = glob.glob('temp/predict/resnext-101/*.npy'.format())
+
+    predict = np.load(predict_path_list[0])
+    predict_sum = np.zeros(predict.shape, dtype='float32')
+
+    for predict_path in predict_path_list:
+        predict = np.load(predict_path)
+        predict_sum += predict
+
+    with open('./temp/submit/predict_for_submit.csv', 'w') as f:
+        for i, predict in enumerate(predict_sum):
+            label = np.argmax(predict)
+            s = '{0},{1}'.format(i, label) + '\n'
+            f.write(s)
+
+
 if __name__ == '__main__':
     #make_directory()
-    fine_tune(mode='train')
+    #fine_tune(mode='train')
     #fine_tune(mode='predict')
-
+    average_predict()
