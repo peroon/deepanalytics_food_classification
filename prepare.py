@@ -12,7 +12,7 @@ from constant import IMAGES_ROOT
 from constant import IMAGE_SIZE
 from square_cropper import SquareCropper
 
-DEBUG = True
+DEBUG = False
 mxnet_dir = IMAGES_ROOT + 'mxnet/'
 
 
@@ -174,7 +174,7 @@ if __name__ == '__main__':
     # make_directory()
     # copy_and_rename()
     # crop()
-    # make_train_lst()
-    # make_test_lst()
-    # make_rec()
+    make_train_lst()
+    make_test_lst()
+    make_rec()
     pass
