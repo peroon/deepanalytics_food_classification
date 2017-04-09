@@ -190,7 +190,7 @@ def average_predict():
 
 
 if __name__ == '__main__':
-    #make_directory()
+    make_directory()
     fine_tune(mode='train')
-    #fine_tune(mode='predict')
-    #average_predict()
+    fine_tune(mode='predict')
+    average_predict()
