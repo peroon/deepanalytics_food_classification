@@ -57,8 +57,7 @@ shared_module = None
 def fine_tune(mode):
     BATCH_PER_GPU = 20
     CLASS_NUM = 25
-    #EPOCH_NUM = 20
-    EPOCH_NUM = 2
+    EPOCH_NUM = 20
     MODEL_NAME = 'resnext-101'
     ENABLE_VALIDATION = True
     GPU_NUM = 1
@@ -192,6 +191,6 @@ def average_predict():
 
 if __name__ == '__main__':
     #make_directory()
-    #fine_tune(mode='train')
+    fine_tune(mode='train')
     #fine_tune(mode='predict')
-    average_predict()
+    #average_predict()

@@ -87,7 +87,7 @@
 ### 前準備としての画像の加工
 
 ```
-提供されているデータセットのzipを展開し、ラベルと一緒に1つのディレクトリに置く。例えば以下のように。
+提供されているデータセットのzipを展開し、ラベルと一緒に1つのディレクトリに置く。例えば以下のように置き、フルパスはconstant.pyに記入する
 
 C:\Users\kt\Documents\DataSet\cookpad>ls -l
 total 8376
@@ -107,12 +107,35 @@ drwxr-xr-x 1 kt 197614      0 Apr  4 20:50 clf_train_images_labeled_2
 ```
 完了後
 
-
+C:\Users\kt\Documents\DataSet\cookpad\mxnet>ls -l *.rec
+-rw-r--r-- 1 kt 197614  915396960 Apr  8 19:57 test_224x224_crop_0.rec
+-rw-r--r-- 1 kt 197614  933075016 Apr  8 20:01 test_224x224_crop_1.rec
+-rw-r--r-- 1 kt 197614  922141600 Apr  8 20:05 test_224x224_crop_2.rec
+-rw-r--r-- 1 kt 197614  923399752 Apr  8 20:09 test_224x224_crop_3.rec
+-rw-r--r-- 1 kt 197614 2966390868 Apr  8 20:23 train_224x224_fold_0.rec
+-rw-r--r-- 1 kt 197614 2962274168 Apr  8 20:35 train_224x224_fold_1.rec
+-rw-r--r-- 1 kt 197614 2964625728 Apr  8 20:48 train_224x224_fold_2.rec
+-rw-r--r-- 1 kt 197614 2963049840 Apr  8 21:00 train_224x224_fold_3.rec
+-rw-r--r-- 1 kt 197614 2960390948 Apr  8 21:12 train_224x224_fold_4.rec
+-rw-r--r-- 1 kt 197614  737792020 Apr  8 21:15 validation_224x224_fold_0.rec
+-rw-r--r-- 1 kt 197614  741908720 Apr  8 21:18 validation_224x224_fold_1.rec
+-rw-r--r-- 1 kt 197614  739557160 Apr  8 21:21 validation_224x224_fold_2.rec
+-rw-r--r-- 1 kt 197614  741133048 Apr  8 21:24 validation_224x224_fold_3.rec
+-rw-r--r-- 1 kt 197614  743791940 Apr  8 21:27 validation_224x224_fold_4.rec
 ```
     
-* 学習と予測
+* 学習
     * 上記で作ったrecファイルを画像データとして、学習・予測する
     * dmlc_mxnet\example\image-classification\fine-tune.py 参照
+    * 計算時間は、GTX1080で20epoch 5hかかり、それを5モデル分行うので25hかかります
+    * [Fine tuned weight files is available](https://drive.google.com/drive/folders/0BxkHqJ_0XZ-lb0s3azltRHhNVTg?usp=sharing)
+* 予測
+    * recファイルに対して予測する
+    * dmlc_mxnet\example\image-classification\fine-tune.py 参照
+    * GTX1080 10000枚を4 crop x 5 model分、計200000回のpredictを行い、確率予測をnpyで保存します
+    * 計算時間は、GTX1080でxxx分です
+    * 最後に確率予測の平均を取り、最大のラベルに予測します
+     
 
 ## 教師なし学習について
 
