@@ -91,4 +91,4 @@
 
 ### 再現コードとモデリング詳細について
 
-* [README.md](./README.md)
+* [README.md](./README.jp.md)
