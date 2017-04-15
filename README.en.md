@@ -33,9 +33,10 @@
 ## Modeling Details
 
 * Preprocess of Images
-    * 前提
-        * CNNへの入力として正方形画像にしたい
-    * 仮説
+    * Premise
+        * I need square image as input for CNN
+    * Hypothesis
+        * TODO...
         * 中央に写っていない料理があるので、上下左右から切り取った画像を学習画像にすると位置に頑健となり精度が上がるのではないか
         * 切り取らず、正方形に縮小させた画像も情報量がほぼ保持されるので、良い正方形画像の作り方なのではないか
     * 手法
