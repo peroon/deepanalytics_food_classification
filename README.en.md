@@ -32,33 +32,42 @@
 
 ## Modeling Details
 
-* Preprocess of Images
+* Pre-process of Images
     * Premise
         * I need square image as input for CNN
     * Hypothesis
-        * TODO...
-        * 中央に写っていない料理があるので、上下左右から切り取った画像を学習画像にすると位置に頑健となり精度が上がるのではないか
-        * 切り取らず、正方形に縮小させた画像も情報量がほぼ保持されるので、良い正方形画像の作り方なのではないか
-    * 手法
-        * 1枚の画像を以下の方法で4枚に増幅させる（画像の横幅をW, 縦幅をHとする)
+        * I noticed that food is not always center positioned in a image, so cropping of image may work well. 
+        It will give the robustness of food position.
+        * Scaling to square without retaining the original aspect ratio also may work well. 
+        Compared to cropping, it discard less information. 
+    * Method 
+        * This method creates four images from a original image
+        * W: width of image
+        * H: height of image
             * Cropping
-                * 横長画像の場合、正方形H x Hの画像を左端、中央、右端から切り取る
-                * 縦長画像の場合、正方形W x Wの画像を上端、中央、下端から切り取る
+                * If W >= H, crop H x H square iamges from left end, center and right end.
+                * If W <H, crop W x W square iamges from top end, center and bottom end.
             * Scaling
-                * 横長画像の場合、H x Hに強制的にリサイズする
-                * 縦長画像の場合、W x Wに強制的にリサイズする
-        * 得られた画像を、CNN(resnext)への入力サイズである224x224にリサイズし、PNGで保存する
-    * 検証結果
-        * 訓練画像10000枚を正方形にスケールしたものより、本手法で40000枚にした方が精度が向上した
-    
-* 画像セットを分割してrec化する
-    * 前提
-        * mxnetの学習データ形式として、画像セットをパックしてrecファイルにまとめる
-    * 仮説
-        * 画像をすべて用いて学習した1モデルより、クロスバリデーションの作法で訓練データを分割し、
-        それを学習した複数モデルの予測を合わせると精度が向上するのではないか
-    * 分割手法
-        * 訓練画像
+                * If W >= H, resize to H x H size image
+                * If W < H, resize to W x W size image
+        * These images are resized t0 224x224 and save as PNG. 
+        They are input for CNN (resnext).
+    * Verification
+        * A: Train CNN by 10000 square-scaled images
+        * B(ours): Train CNN by 40000 image got by our method
+        * B > A about test data accuracy
+        
+* Split images and make rec files
+    * Premise
+        * As input data strudcture for mxnet, pack images as a rec file.
+    * Hypothesis
+        * A: 1 model trained by all training images
+        * B(ours): Split 10000 training images into 8000 training images and 2000 validation images according to 
+        Cross Validation rule. After making 5 set, 5 CNN models are trained by each 8000 training images.
+        For prediction, 5 models prediction are summed.
+        * I forecasted B > A
+    * Split Method
+        * Training Images
             * 40000枚を5分割し、4/5のみ(32000枚)をrec化したものを5セット作る
         * バリデーション画像
             * 訓練画像で余った8000枚をrec化したものを5セット作る
