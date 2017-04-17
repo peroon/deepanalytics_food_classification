@@ -181,4 +181,4 @@ if mode == 'train':
 
 ### Other Topics
 
-* [README_else.en.md](./README_else.jp.md)
+* [README_else.en.md](./README_else.en.md)

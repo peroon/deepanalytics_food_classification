@@ -159,4 +159,4 @@ if mode == 'train':
 
 ### 再現コードとモデリング詳細以外について
 
-* [README_else.md](./README_else.jp.md)
+* [README_else.jp.md](./README_else.jp.md)
