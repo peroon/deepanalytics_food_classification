@@ -47,6 +47,8 @@
             * Cropping
                 * If W >= H, crop H x H square iamges from left end, center and right end.
                 * If W <H, crop W x W square iamges from top end, center and bottom end.
+                * I regard left-end-cropped and top-end-cropped as same.
+                * right-end-cropped and bottom-end-cropped, too.
             * Scaling
                 * If W >= H, resize to H x H size image
                 * If W < H, resize to W x W size image
@@ -68,48 +70,55 @@
         * I forecasted B > A
     * Split Method
         * Training Images
-            * 40000枚を5分割し、4/5のみ(32000枚)をrec化したものを5セット作る
-        * バリデーション画像
-            * 訓練画像で余った8000枚をrec化したものを5セット作る
-        * テスト画像
-            * 正方形画像の作り方ごと(全4種)に分けた10000枚ごとにrec化し、4セット作る
-    * 検証結果
-        * 分割して複数のモデルを作ってアンサンブルした方が、40000枚で学習した1モデルよりも精度が向上した
+            * Each 10000 training images of 4 sets are splited by 5 (8000 images and 2000 images)
+            * 8000 images x 4 set = 32000 images. They are packed to rec file.
+            * According to Cross Validation like split, I make 5 set of 32000 images rec.
+        * Validation Images
+            * I make 5 set of 8000 (2000 images x 4 type) images rec.
+        * Test Images
+            * I don't need split test images. Because it is not used training and ensembling.
+            * 10000 test images of 4 types are each packed as rec file.
+    * Verification
+        * I confirmed our ensemble method (B) is superior to normal training (A) on test precision.
     
-* 学習
-    * 仮説
-        * vgg16, resnetなど様々なモデルのアンサンブルで精度を上げてきたが、resnextを足すのが良いのではないか
-    * 手法
-        * resnext 101 http://data.dmlc.ml/mxnet/models/imagenet/resnext/ のfine-tuning
-        * 訓練用データ5セットをresnext 101のfine-tuningで学習し、5つの学習済みモデルを作成する
-    * 検証結果
-        * resnextをアンサンブルに加えることで精度が上がった
-        * vgg16, resnet, resnextなど各モデルの重み付けを変えてテストの精度を観察したところ、
-        最終的にはresnext単体の5モデルでアンサンブルすると1番精度が高かった
+* Training
+    * Hypothesis
+        * I made a progress by ensembling many CNN models such as vgg16, vgg19, resnet, inception-v3, xception. 
+        I assumed that resnext is also good for ensemble.
+    * Method
+        * resnext 101 http://data.dmlc.ml/mxnet/models/imagenet/resnext/
+        * I fine-tuned it with 5 training set and made 5 models
+    * Verification
+        * After adding resnext to ensemble group, test precision was improved.
+        * I checked the influence of weighted averaged prediction of each model, and found that
+        resnext 5 model ensemble is best. At last, other models was not needed.
     
-* 予測
-    * 手法
-        * 5つのモデルそれぞれがテスト画像の4 recに対してラベルを確率予測する
-        * 25クラス分類なので10000 x 25の行列が20個できる
-        * 20個の行列を加算し、行ごとに最大確率のラベルを予測ラベルとする
+* Prediction
+    * Method
+        * 5 resnext models predict label probability on 4 set of test images (4 x 10000) individually. 
+        * After each model prediction, I get 20 matrices that is 10000 x 25 probabilities, 
+        because of 25 labels classification.
+        * Finally, sum up 20 matrices and select max probablity on each row, and predict the label.
 
+## Concrete sequeces of reproduction
 
-## モデル再現のための手順
-
-* Needed Python Packages
+* Python Packages
     * mxnet (machine learning)
-        * http://mxnet.io/get_started/windows_setup.html を参考にimport mxnetできるように設定します
+        * To install, refer to http://mxnet.io/get_started/windows_setup.html
         * Built mxnet is provided for Windows user https://github.com/dmlc/mxnet/releases
-        * [Warning] 上記で提供されているsetupenv.cmdでの環境変数設定は、1024文字の長さ制限により、環境変数を破壊しうるので、
-        環境変数PATHの文字列はバックアップしておくべき
+        * [Warning] Upper site provides setupenv.cmd for auto PATH setting. 
+        But Windows has 1024 characters limitation of PAHT. If the limitation occurs on executing setupenv.cmd,
+        PATH is cut off, so make sure PATH backup.
     * cv2 (image processing)
     * numpy (matrix)
     * tqdm (progress bar)
 
-### 前準備としての画像の加工
+### Image Pre-processing
 
 ```
-提供されているデータセットのzipを展開し、ラベルと一緒に1つのディレクトリに置く。例えば以下のように置き、フルパスはconstant.pyに記入する
+Unzip provided dataset and put them in a directory with label data. 
+Write the pass in constant.py.
+Putting example,
 
 C:\Users\kt\Documents\DataSet\cookpad>ls -l
 total 8376
@@ -120,11 +129,11 @@ drwxr-xr-x 1 kt 197614      0 Apr  4 20:50 clf_train_images_labeled_2
 -rw-r--r-- 1 kt 197614 184920 Apr  4 15:04 clf_train_master.tsv
 ```
     
-* prepare.pyを実行し、画像を加工する
-    * crop, resize, rename, moveする
-    * 完了後、lstファイルの位置でcmdを開き、make_rec.batを実行し、データセットrecを作る
-    * prepare.py内のDEBUG = Trueとすることで小さいデータでの動作確認ができる
-    * 最終的にはDEBUG = Falseで実行する。最新のPCでrec作成に2h程かかります
+* To process images, execute prepare.py
+    * The script does crop, resize, rename and move
+    * After execution, open command prompt where lst files are, and execute make_rec.bat to make rec files.
+    * You can experiment on small dataset by rewriting DEBUG = True in prepare.py
+    * Making rec files takes 2 hours by 2017 latest PC.
     
 ```
 After completion, rec files are outptuted like this.
@@ -151,9 +160,10 @@ C:\Users\kt\Documents\DataSet\cookpad\mxnet>ls -l *.rec
     * refer to dmlc_mxnet\example\image-classification\fine-tune.py
     * To train, it spends 25 hours for 5 models and each 20 epoch. 
     One model trainig spends about 5 hours with GTX1080 
-    * 1モデル作成するごとにcudnn memory errorで落ちるので、訓練は5回実行してください。
-    その際、下記コードの0の部分を1, 2, 3, 4と書き換えてください。
-        * 本件の[Issue](https://github.com/peroon/deepanalytics_food_classification/issues/1)
+    * This training code has a bug. 
+    After training a model, it cause "cudnn memory error" so you should execute the script 5 times.
+    When re-execution, rewrite 0 to 1, 2, 3, 4 of fine-tune.py
+        * [Issue](https://github.com/peroon/deepanalytics_food_classification/issues/1)
 
 ```
 #fine-tune.py 
@@ -169,6 +179,6 @@ if mode == 'train':
     * Finally, I sum up all predicted probability matrix, and according to max probability, 
     each label is decided for each image.
 
-### 再現コードとモデリング詳細以外について
+### Other Topics
 
-* [README_else.md](./README_else.jp.md)
+* [README_else.en.md](./README_else.jp.md)
