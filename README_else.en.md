@@ -30,68 +30,83 @@ The field is called as "Semi-Supervised Learning".
 ## Random Search of Hyper Parameters
 
 * I tried the following hyper parameter adjustment.
-    * fine tune前に加えたtop layerのみの学習epoch
-    * fine tune時のepoch
-    * learning rate: 途中から0.1倍すると精度が上がった
-    * momentum: デフォルト0.8だが0.75など小さいほうがよさそうだった
-    * batch size: 大きい方がよさそうだったがGPUのメモリに制限される
-    * freeze index: fine tune時にfreezeさせて重みを更新しない層数。全総数をNとすると、1/3層あたりがよさそうだった
-* 上記のうちfreeze indexの影響が大きかったので、途中からはそれに絞って探索した
-* 5 fold cross validationを行い、各5モデルのvalidation errorが低くなるようにしてから予測を統合したら精度が上がった
-* 外出するときにくじ引き感覚で実行し、好きなときに止められるのが、ランダムサーチの良い点である
+    * epoch for top layer 
+    * epoch for fine-tune
+    * learning rate
+        * Multiplying 0.1 in the middle of training improved test accuracy.
+    * momentum
+        * Default value is 0.8, but smaller value is better. For example, 0.75.
+    * batch size
+        * It is said that more value is better, but there is GPU memory limitation.
+    * freeze index
+        * It is number of layers that freeze in fine-tune. Freezed layer's weights are not updated in training.
+        * When CNN layer number is N, It seemed that one-third of N is good for freeze index.
+* It seemed that freeze index has a big influence on test accuracy, 
+so from the middle, I just random searched it. 
+* I tried 5-fold cross validation and fit hyper parameter on validation error, 
+then I integrated their predictions on test data. The method improved test accuracy.
+* It is good point of random search that you can feel free to run and stop like a lottery.
 
 ## Keras
 
-* 最初はKerasで実験を行った。ドキュメントが丁寧なので、最初はKerasから始めるのがオススメ
-* vgg16からresnet, xceptionなどのimagenet学習済みモデルが公開されている
-* 仮説
-    * ネットワーク構造の違うCNNを使うことで多様性ができ、それらをアンサンブルすることで精度が向上するのではないか
-* 検証結果
-    * vgg16, vgg19, inception-v3, inception-v4, resnet, xceptionを用い、各モデルの予測の重み付けは同一とした
-    * 単体モデルよりもアンサンブルした方が精度が向上し、0.79まで出せた
-* resnetが画像サイズが224x224で扱いやすく、訓練も速くて精度も高かったので、1モデル選ぶならresnetが良い
-* 公式以外から、inception v4も取り込んだ https://github.com/kentsommer/keras-inceptionV4
+* At first, I got started with Keras because it has good documents. I recommend Keras for beginner.
+* Keras published imagenet trained models, such as vgg16, resnet, xception.
+* Hypothesis
+    * The Ensemble of various CNN models improve test accuracy because they have diversity.
+* Verified Result
+    * Using vgg16, vgg19, inception-v3, inception-v4, resnet and xception,
+    I weighted them equally and I summed up their predictions.
+    * Ensemble is better than each single model, and I got 0.79 accuracy on test data.
+    * I recommend resnet as single model because image size is 224x224 that is smaller than xception and 
+    training is fast and test accuracy is high.
+* I also took in inception v4 from https://github.com/kentsommer/keras-inceptionV4
 
 
 ## mxnet
 
-* resnextの学習済みモデルために導入
-* 学習後、Kerasの各モデルの予測と合成し、重み付け和も試したが、最終的にはresnextのみを用い、コンテスト中の精度は0.82, 
-コンテスト後は最終スコア0.81639で2位だった
+* I decided to use it for resnext trained model
+* After training, I merged its prediction and Keras models predictions.
+Exmeriments on weight averaged prediction revealed that resnet only got best test accuracy.
+* I got test accuracy score 0.82 during the contest, and got 0.81639 after contest as a final score.
+* I won the second place in accuracy.
 
-## 学習済みモデル
+## Trained Models
 
-* imagenetで学習したモデルのfine tuningが、画像認識に有効な手法であり、公開されている重みを利用した
-* imagenet-11kで学習したモデルを足したが、精度は向上しなかった。imagenetとは違うデータセットで学習することで多様性が出ると思ったがそうではなかった
-* 海外の公開済みモデルにお世話になるばかりではなく、日本も学習済みモデルの公開をすべきと思った
-* 大量の料理画像を学習した料理認識用のモデルや、ひらがなや漢字を分類するモデルの重みを公開してはどうか
+* Fine tuning of published models trained by imagenet is a effective method for image classification.
+* I also used imagenet-11k trained model hoping for improvement because it is trained other dataset and has diversity.
+But it has no positive effect.
+* I am grateful for overseas trained models and 
+I also thought that Japanese researcher should also release learned models.
+* For example, model trained with food images, or with hiragana, or chinese characters.
 
-## コンテストへの取り組み方
+## My approach to the contest
 
-* Keras, mxnetの公式サイトを読む
-* KaggleなどのImage classification系の工夫を読む
-* Image classification系論文(VGG等)の画像前処理を読む
-* 学習を回してSubmitを繰り返し、うまく行った手法を積み重ねる
+* Read Keras and mxnet documentation
+* Read effective approaches for image classification contest of Kaggle
+* Read papers of CNN image classification (e.g. VGG16) and understand image pre-processing
+* Train, submit and leave effective methods
 
-## データの観察
+## Data Observation
 
-* ラベルごとに画像をグリッド状に配置して1枚にし、データの傾向を観察した
-    * 料理が画像の中央に写っていないものがある
-    * 料理は自由であり、多様性が大きく、顔がついていたりもする
-    * 画像加工で枠や文字が付いているものもある
+* For each label, I placed the image in a grid and observed the nature of the data.
+    * Some foods are not in the center of the image
+    * Cooking is free and has big diversity. Some food has faces.
+    * Some images have frames or letters attached by image processing by the user.
     
 ![](README_images/class_2_bread_sweets.png)
 
-## 器認識
+## Dish (Vessel) Recognition
 
-* 料理は器の上に乗っていることが多く、器を認識することができればそこだけ切り取ってより精度の高い学習データ・テストデータとすることができると考えて実験した
-* 器は円であると仮定し、画像のYスケールを変化させつつ、ハフ変換の円検出を行った
-* 完全な円でないと検出しづらかった
-* 10枚に1枚ほど、器検出できたので、器内部だけの画像も足して学習させたが、精度は向上しなかった。理由は2つ考えられる
-    * 器検出の誤検出のため
-    * Data Augmentationですでに満たされている
-* 器検出器をCNNで実装できれば、円以外の器も検出できるだろう
+* Foods are often on dish, so recognizing dish and cropping the region as input image may improve accuracy.
+* I assumed that dish is a regular circle
+* While changing the Y axis scale of the image, circle detection was performed using Hough transform
+* As a result, it could not detect unless it was a perfect circle.
+* I got 1 dish image from about 10 images. I added that dish cropped image as training data,
+but accuracy did not imporove. There are two possible reasons.
+    * False detection of dish recognition
+    * Similar things are already met by Data Augmentation
+* If I make dish detectors with CNN, I will be able to detect dishes other than regular circles
 
-### 再現コードとモデリング詳細について
+### About Main Topics
 
-* [README.md](./README.jp.md)
+* [README.en.md](./README.en.md)
