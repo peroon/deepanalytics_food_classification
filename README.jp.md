@@ -19,7 +19,7 @@
 ## 実行環境
 
 * OS: Windows 10
-* Python: 3.5
+* Python: 3.5.2
 * フレームワーク: mxnet
 * メモリ: 64GB
 * GPU: GTX 1080
@@ -87,7 +87,7 @@
 ## モデル再現のための手順
 
 * 必要なPythonパッケージのインストール
-    * mxnet (機械学習)
+    * mxnet 0.9.3 (機械学習)
         * http://mxnet.io/get_started/windows_setup.html を参考にimport mxnetできるように設定します
         * ビルド済みのものが提供されています https://github.com/dmlc/mxnet/releases
         * ※注意 上記で提供されているsetupenv.cmdでの環境変数設定は、1024文字の長さ制限により、環境変数を破壊しうるので、

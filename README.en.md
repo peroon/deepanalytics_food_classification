@@ -19,7 +19,7 @@
 ## Execution Environment
 
 * OS: Windows 10
-* Python: 3.5
+* Python: 3.5.2
 * Framework: mxnet
 * Memory: 64GB
 * GPU: GTX 1080
@@ -103,7 +103,7 @@
 ## Concrete sequeces of reproduction
 
 * Python Packages
-    * mxnet (machine learning)
+    * mxnet 0.9.3 (machine learning)
         * To install, refer to http://mxnet.io/get_started/windows_setup.html
         * Built mxnet is provided for Windows user https://github.com/dmlc/mxnet/releases
         * [Warning] Upper site provides setupenv.cmd for auto PATH setting. 
