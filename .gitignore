@@ -2,3 +2,4 @@
 *.pyc
 dmlc_mxnet/example/image-classification/resnext-101*
 dmlc_mxnet/example/image-classification/temp/*
+slides/*.pdf
