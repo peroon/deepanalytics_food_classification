@@ -14,7 +14,7 @@
 
 ## Trained Model
 
-* [Fine tuned weight files is available](https://drive.google.com/drive/folders/0BxkHqJ_0XZ-lb0s3azltRHhNVTg?usp=sharing)
+* [Fine tuned weight files are available](https://drive.google.com/drive/folders/0BxkHqJ_0XZ-lb0s3azltRHhNVTg?usp=sharing)
 
 ## Execution Environment
 
