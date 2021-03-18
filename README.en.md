@@ -8,7 +8,7 @@
 * 10000 labeled train images
 * 10000 test images
 
-## Soure Code
+## Source Code
 
 * exists in this project.
 
